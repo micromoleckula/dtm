@@ -1,0 +1,36 @@
+# AI Rules for 3D First-Person Mechanic & Drift Game (Babylon.js)
+
+## Tech Stack & Architecture
+- Engine: Babylon.js 7+ (@babylonjs/core, @babylonjs/gui)
+- Language: TypeScript (strict mode, no `any`, explicit types)
+- Project Structure:
+  - `src/core/`: PURE TypeScript ONLY. No Babylon.js, WebGL, or DOM imports. Unit-testable.
+  - `src/config/`: Vehicle specs, balance constants, part catalogs, event names.
+  - `src/entities/`: 3D Babylon.js entities (`FPSCharacter`, `Car3DEntity`, `WorldItem3D`).
+  - `src/scenes/`: Babylon scene managers (lean orchestrators <250 lines).
+  - `src/systems/`: Engine helpers (InputManager with PointerLock, 3D MeshBuilder, EventBus).
+  - `src/types/`: Interfaces and contracts.
+  - `src/ui/`: Crosshair, telemetry, and interaction HUD.
+
+## Core Rules
+1. **Zero Allocation in Render Loop**:
+   - Never instantiate Vector3, Matrix, or closures in `onBeforeRenderObservable` or tick methods.
+   - Use pre-allocated scratch objects.
+2. **First-Person & Hands Viewmodel**:
+   - First-person mouse-look with PointerLock.
+   - 3D items held in hands are parented to the camera viewmodel anchor with bobbing and sway.
+   - Center screen raycasting detects 3D pickable items, car doors, and 3D bolts within reach distance.
+3. **3D Vehicle Physics**:
+   - 3D vehicle with 4 steerable/rotating wheels, suspension springs, and rear slip drift dynamics.
+   - Seamless enter/exit between FPS walking and driving.
+4. **Dependency Injection**:
+   - Pass Scene, InputManager, and EventBus via constructors. No global singletons.
+
+## Art Direction & Performance Budgets
+- **Visuals**: grounded, slightly gloomy rural Japanese coastal village in the spirit of *My Summer Car*. Low-poly shapes, dirty and weathered surfaces. Not pixelated, not "retro-filtered".
+- **Textures**: `512x512`, tileable procedural textures with mipmaps + trilinear sampling. Never use `NEAREST_SAMPLINGMODE`.
+- **Materials & Lighting**: world geometry uses `StandardMaterial` only (diffuse + subtle specular). No PBR, normal or parallax stacks. Soft `ShadowGenerator` with a `2048x2048` map, casters limited to about `70m`; `FOGMODE_EXP2` fog and a gradient sky dome with day/night cycle support.
+- **Draw Calls**: keep total under 200. Merge static geometry by material (`Mesh.MergeMeshes`); use `thinInstanceAdd` for repeated props. Report the count after world-building changes.
+- **Deduplication**: materials and textures only through `MaterialCache` / `ProceduralTextureFactory`.
+- **Colliders**: invisible box/convex proxies in `SpatialGrid` (32m cells), queried only around the player and car.
+- **Disposal**: every scene, entity, texture and buffer exposes `dispose()`.

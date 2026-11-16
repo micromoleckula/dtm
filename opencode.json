@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "google/gemini-4-hydrogen",
+  "small_model": "google/gemini-2.5-flash",
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "rm -rf *": "deny",
+      "sudo *": "ask",
+      "*": "allow"
+    }
+  },
+  "compaction": {
+    "auto": true,
+    "prune": true
+  }
+}
